@@ -106,7 +106,28 @@ cd postcode-lookup-generator
 make clean_install
 ```
 
-## TODO:
+The repo will take some time to clone, as it contains large CSV input data files.
 
-- Add instructions on connecting to postgis after install
-- Add a separate script to generate a SQLite & CSV file of postcode mappings
+The install process will probably take an hour or more, as it copies all data into a dockerised PostGIS database, and
+then performs various geo-spatial queries on _every single address_.
+
+### Generate output files
+
+Once the install is complete, you can generate output files, such as a postcode -> constituency CSV or SQLite database.
+
+**TODO**: Add scripts to generate a SQLite & CSV file of postcode mappings & instructions on use
+
+### Ad-hoc analysis
+
+You can connec to to the local dockerised PostGIS with:
+
+`psql postgres://local:password@localhost:54321/gis`
+
+From there you can explore the tables and do any ad-hoc analysis.
+
+**TODO**: List the tables and schema
+
+### Shutting down
+
+- `make stop_db` - Stops the PostGIS docker database, but leaves all data intact (you can start it again with `make start_db`)
+- `make delete_db` - Stops the PostGIS docker database, and deletes the volume with all the data
