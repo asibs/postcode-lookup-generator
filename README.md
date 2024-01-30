@@ -61,7 +61,7 @@ polling station.
 
 ### New open data, new approach
 
-New data spotted [Mark Longair](https://longair.net/blog/2021/08/23/open-data-gb-postcode-unit-boundaries/) was
+New data spotted by [Mark Longair](https://longair.net/blog/2021/08/23/open-data-gb-postcode-unit-boundaries/) was
 released in 2020 - a postcode column was added to the National Statistics UPRN Lookup dataset.
 
 This dataset now includes:
