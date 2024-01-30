@@ -46,8 +46,7 @@ def create_address_table(connection) -> None:
                 easting INTEGER,
                 longitude DECIMAL(18,6),
                 latitude DECIMAL(18,6),
-                centroid GEOMETRY,
-                constituency_code VARCHAR(50)
+                centroid GEOMETRY
             )
             """
         )
@@ -94,17 +93,16 @@ def set_address_coords(connection) -> None:
         )
         connection.commit()
 
-def set_constituency(connection) -> None:
+def create_address_constituency_map(connection) -> None:
     with connection.cursor() as cursor:
-        print("Updating constituency of all rows")
+        print("Creating address to constituency mapping for all addresses")
         cursor.execute(
             """
-            UPDATE addresses a
-            SET constituency_code = (
-                SELECT p.short_code
-                FROM parl_constituencies_2025 p
+            CREATE TABLE address_to_constituency AS (
+                SELECT a.uprn, p.short_code AS constituency_code
+                FROM addresses a, parl_constituencies_2025 p
                 WHERE ST_Within(a.centroid, p.geom)
-            );
+            )
             """
         )
         connection.commit()
@@ -114,16 +112,16 @@ def generate_postcode_to_constituency_mappings(connection) -> None:
         print("Creating postcode to constituencies mappings")
         cursor.execute(
             """
-            CREATE TABLE postcode_to_constituencies
-            AS
-            (
+            CREATE TABLE postcode_to_constituencies AS (
                 SELECT
                     a.postcode,
-                    a.constituency_code,
+                    map.constituency_code,
                     counts.postcode_address_count,
                     COUNT(1) AS postcode_constituency_address_count,
                     ( COUNT(1) * 100.0 / counts.postcode_address_count ) as proportion_of_addresses
                 FROM addresses a
+                JOIN address_to_constituency map
+                ON a.uprn = map.uprn
                 JOIN (
                     SELECT postcode, COUNT(1) AS postcode_address_count
                     FROM addresses
@@ -169,7 +167,7 @@ def main() -> None:
           copy_addresses(file_path, conn)
 
         set_address_coords(conn)
-        set_constituency(conn)
+        create_address_constituency_map(conn)
         generate_postcode_to_constituency_mappings(conn)
         load_mysociety_constituencies(conn)
 
