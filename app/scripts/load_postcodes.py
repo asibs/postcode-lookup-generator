@@ -112,7 +112,7 @@ def generate_postcode_to_constituency_mappings(connection) -> None:
         print("Creating postcode to constituencies mappings")
         cursor.execute(
             """
-            CREATE TABLE postcode_to_constituencies AS (
+            CREATE TABLE postcode_to_constituency AS (
                 SELECT
                     a.postcode,
                     map.constituency_code,
@@ -140,7 +140,7 @@ def load_mysociety_constituencies(connection) -> None:
         print("Loading MySociety postcode to constituencies mappings")
         cursor.execute(
             """
-            CREATE TABLE mysociety_postcode_constituencies (
+            CREATE TABLE mysociety_postcode_constituency (
                 postcode VARCHAR(10) PRIMARY KEY,
                 short_code VARCHAR(50)
             )
@@ -148,7 +148,7 @@ def load_mysociety_constituencies(connection) -> None:
         )
 
         file_path = "data/2024-01-28/mysociety_2025_postcodes_with_constituencies.csv"
-        with cursor.copy("COPY mysociety_postcode_constituencies (postcode, short_code) FROM STDIN") as copy:
+        with cursor.copy("COPY mysociety_postcode_constituency (postcode, constituency_code) FROM STDIN") as copy:
             csv_file = pandas.read_csv(file_path)
             for _index, line in csv_file.iterrows():
                 copy.write_row((line["postcode"], line["short_code"]))
@@ -160,13 +160,13 @@ def main() -> None:
     print(f"Found {len(files)} ONS UPRN CSV files")
 
     with psycopg.connect('user=local password=password host=localhost port=54321 dbname=gis') as conn:
-        create_address_table(conn)
+        # create_address_table(conn)
 
-        for file_path in sorted(files):
-          print(f"Loading data from {file_path}")
-          copy_addresses(file_path, conn)
+        # for file_path in sorted(files):
+        #   print(f"Loading data from {file_path}")
+        #   copy_addresses(file_path, conn)
 
-        set_address_coords(conn)
+        # set_address_coords(conn)
         create_address_constituency_map(conn)
         generate_postcode_to_constituency_mappings(conn)
         load_mysociety_constituencies(conn)
@@ -183,11 +183,11 @@ SELECT
     map.proportion_of_addresses,
     map.postcode_address_count,
     mysoc.postcode,
-    mysoc.short_code
-FROM postcode_to_constituencies map, mysociety_postcode_constituencies mysoc
+    mysoc.constituency_code
+FROM postcode_to_constituency map, mysociety_postcode_constituency mysoc
 WHERE map.proportion_of_addresses >= 50.0
 AND map.postcode = mysoc.postcode
-AND map.constituency_code <> mysoc.short_code
+AND map.constituency_code <> mysoc.constiruency_code
 ORDER BY 1;
 """
 # TODO: Generate the final postcode -> constituncies map by combining _all_ constituencies from our map AND any from MySoc.
