@@ -145,7 +145,7 @@ def load_mysociety_constituencies(connection) -> None:
             """
             CREATE TABLE mysociety_postcode_constituency (
                 postcode VARCHAR(10) PRIMARY KEY,
-                short_code VARCHAR(50)
+                constituency_code VARCHAR(50)
             )
             """
         )
@@ -163,13 +163,13 @@ def main() -> None:
     print(f"Found {len(files)} ONS UPRN CSV files")
 
     with psycopg.connect('user=local password=password host=localhost port=54321 dbname=gis') as conn:
-        # create_address_table(conn)
+        create_address_table(conn)
 
-        # for file_path in sorted(files):
-        #   print(f"Loading data from {file_path}")
-        #   copy_addresses(file_path, conn)
+        for file_path in sorted(files):
+          print(f"Loading data from {file_path}")
+          copy_addresses(file_path, conn)
 
-        # set_address_coords(conn)
+        set_address_coords(conn)
         create_address_constituency_map(conn)
         generate_postcode_to_constituency_mappings(conn)
         load_mysociety_constituencies(conn)
