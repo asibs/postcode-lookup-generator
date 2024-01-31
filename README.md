@@ -79,8 +79,19 @@ constituency.
 If different UPRNs within a single postcode have different constituencies, we know we have a postcode where the exact
 address is needed to determine the constituency.
 
-TODO: Determine if it's possible to get the human-readable address for each UPRN as open data. With this, we could go
-one step further, and for such postcodes ask users for their full address so we can determine their constituency.
+At the time of writing, there's no open data source which maps UPRNs to a human-readable address. This means if a
+user's postcode straddles multiple constituencies, we can now detect it and tell the user (possibly asking them to
+select from a list of possible constituencies), we still can't tell them their constituency. If we had the UPRN to
+human-readable address mapping, we could display the list of addresses for their postcode, and once they've
+selected their address, show them their exact constituency.
+
+_Caveat: All of the above assumes the single-point location we have for each UPRN accurately determines the
+constituency. It is possible that for a small proportion of properties this isn't the case - eg. a large property
+straddles the boundaries of 2 constituencies, the property centroid in the UPRN Lookup is in constituency A, but
+officially the property is in constituency B. In practice we assume this is unlikely, but you could add a fudge
+factor - ie. for each property, search for all constituencies within X meters of the property, rather than
+just those which contain it. This would significantly increase the time taken by the install steps below, as the
+PostGIS queries would become significantly more expensive._
 
 ## Installation
 
