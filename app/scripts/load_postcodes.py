@@ -1,6 +1,7 @@
 import glob
 from typing import List
 import pandas
+from app.domain.postcodes import Postcode
 import psycopg
 import re
 import subprocess
@@ -66,7 +67,10 @@ def copy_addresses(file_path: str, connection) -> None:
                     print_loading_dot(chunk_no, total_chunks)
                     chunk_no += 1
                     for _index, row in chunk.iterrows():
-                        copy.write_row((row['UPRN'], row['PCDS'], row['GRIDGB1N'], row['GRIDGB1E']))
+                        postcode = Postcode(row['PCDS'])
+                        if not postcode.valid():
+                            print(f"Postcode [{row['PCDS']}] looks invalid.")
+                        copy.write_row((row['UPRN'], postcode.unit_postcode, row['GRIDGB1N'], row['GRIDGB1E']))
 
         connection.commit()
 
@@ -154,7 +158,10 @@ def load_mysociety_constituencies(connection) -> None:
         with cursor.copy("COPY mysociety_postcode_constituency (postcode, constituency_code) FROM STDIN") as copy:
             csv_file = pandas.read_csv(file_path)
             for _index, line in csv_file.iterrows():
-                copy.write_row((line["postcode"], line["short_code"]))
+                postcode = Postcode(line['postcode'])
+                if not postcode.valid():
+                    print(f"Postcode [{line['postcode']}] looks invalid.")
+                copy.write_row((postcode.unit_postcode(), line["short_code"]))
 
         connection.commit()
 
@@ -190,7 +197,7 @@ SELECT
 FROM postcode_to_constituency map, mysociety_postcode_constituency mysoc
 WHERE map.proportion_of_addresses >= 50.0
 AND map.postcode = mysoc.postcode
-AND map.constituency_code <> mysoc.constiruency_code
+AND map.constituency_code <> mysoc.constituency_code
 ORDER BY 1;
 """
 # TODO: Generate the final postcode -> constituncies map by combining _all_ constituencies from our map AND any from MySoc.
