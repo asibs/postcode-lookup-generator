@@ -193,6 +193,12 @@ FROM (
 );
 ```
 
+Or to push it to a file:
+
+```
+psql -c 'COPY ( SELECT postcode, constituencies[1] AS constituency_1, constituencies[2] AS constituency_2, constituencies[3] AS constituency_3, constituencies[4] AS constituency_4, constituencies[5] AS constituency_5 FROM ( SELECT postcode, array_agg(constituency_code) AS constituencies FROM postcode_to_constituency GROUP BY 1 ) ) TO STDOUT WITH(FORMAT CSV, HEADER);' postgres://local:password@localhost:54321/gis > ./output/result.csv
+```
+
 ### Ad-hoc analysis
 
 You can connec to to the local dockerised PostGIS with:
