@@ -139,11 +139,59 @@ The repo will take some time to clone, as it contains large CSV input data files
 The install process will probably take an hour or more, as it copies all data into a dockerised PostGIS database, and
 then performs various geo-spatial queries on _every single address_.
 
+### Data Validation
+
+We can do various data validation on the installed data:
+
+```sql
+-- Look for postcodes which are in the UPRN Lookup dataset, but which aren't in the MySociety dataset
+SELECT DISTINCT postcode
+FROM postcode_to_constituency map
+WHERE NOT EXISTS (
+  SELECT 1 FROM mysociety_postcode_constituency mysoc WHERE mysoc.postcode = map.postcode
+);
+
+-- Look for postcodes which are in the MySociety dataset, but which aren't in the UPRN Lookup dataset
+SELECT * FROM mysociety_postcode_constituency mysoc
+WHERE NOT EXISTS (
+  SELECT 1 FROM postcode_to_constituency map WHERE map.postcode = mysoc.postcode
+);
+
+-- Look for postcodes which are in the MySociety dataset AND in the UPRN Lookup dataset, where the constituency
+-- identified by MySociety for that postcode has not been identified by our methodology
+SELECT * FROM mysociety_postcode_constituency mysoc
+WHERE EXISTS (
+  SELECT 1 FROM postcode_to_constituency map
+  WHERE map.postcode = mysoc.postcode
+)
+AND NOT EXISTS (
+  SELECT 1 FROM postcode_to_constituency map
+  WHERE map.postcode = mysoc.postcode
+  AND map.constituency_code = mysoc.constituency_code
+);
+```
+
 ### Generate output files
 
 Once the install is complete, you can generate output files, such as a postcode -> constituency CSV or SQLite database.
 
 **TODO**: Add scripts to generate a SQLite & CSV file of postcode mappings & instructions on use
+
+This ad-hoc method is a good start-point for a CSV:
+
+```sql
+SELECT
+  postcode,
+  constituencies[1] AS constituency_1,
+  constituencies[2] AS constituency_2,
+  constituencies[3] AS constituency_3,
+  constituencies[4] AS constituency_4,
+  constituencies[5] AS constituency_5
+FROM (
+  SELECT postcode, array_agg(constituency_code) AS constituencies
+  FROM postcode_to_constituency GROUP BY 1
+);
+```
 
 ### Ad-hoc analysis
 
