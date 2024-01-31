@@ -1,5 +1,14 @@
 # Data Used - 2024-01-28
 
+To get all the data:
+
+- Ensure you are in the `data/2024-01-28/` directory
+- `wget -O mysociety_2025_constituencies.csv https://pages.mysociety.org/2025-constituencies/data/parliament_con_2025/0.1.4/parl_constituencies_2025.csv`
+- `wget -O mysociety_2025_constituencies_boundaries.gpkg https://pages.mysociety.org/2025-constituencies/data/parliament_con_2025/0.1.4/parl_constituencies_2025.gpkg`
+- Manually download the UPRN lookup from here, unzip, and copy the data files (`NSUL_JAN_2024_*.csv`) into the `ONS_UPRN_lookup` folder (this could probably be automated with a wget & gunzip combo)
+
+If you don't have the `wget` command line utility (eg. Windows) you can manually download the files and rename them appropriately.
+
 ## MySociety Constituency Data, including boundaries (V0.1.4)
 
 ### Files

@@ -71,6 +71,9 @@ def copy_addresses(file_path: str, connection) -> None:
         connection.commit()
 
 def set_address_coords(connection) -> None:
+    # Method inspiried by / copied from:
+    # https://alexlittledice.wordpress.com/2016/05/01/geocoding-with-postgis/
+    # https://8kb.co.uk/blog/2014/03/16/uk-geographic-postcode-data-latitude-longitude-royal-mail-paf-and-ordnance-survey-data/
     with connection.cursor() as cursor:
         print("Updating centroid of all rows")
         cursor.execute(

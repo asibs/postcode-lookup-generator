@@ -84,6 +84,9 @@ one step further, and for such postcodes ask users for their full address so we 
 
 ## Installation
 
+If you wish to build the data yourself, eg to do ad-hoc analysis with the PostGIS database, or to add extra data to the
+resulting CSV / SQLite database, you can run the postcode lookup generator code yourself.
+
 ### Pre-requisites
 
 - (Git)[https://git-scm.com/book/en/v2/Getting-Started-Installing-Git]
@@ -97,6 +100,20 @@ one step further, and for such postcodes ask users for their full address so we 
 - The install will be much easier if you can run Makefiles. If you use Mac or Unix you should already be able to run
   these. If you use Windows, you may be able to install a program to run them, or you may be able to manually run the
   commands in the `Makefile` one-by-one
+
+### Source data
+
+Get the source data. If the source data changes, a new dated folder will be created in `/data` with the instructions
+for this version. If you want an older version of the source data, use the instructions in that folder.
+
+The current version of the source data is `2024-01-28`, and the instructions to get this data are:
+
+- Ensure you are in the `data/2024-01-28/` directory
+- `wget -O mysociety_2025_constituencies.csv https://pages.mysociety.org/2025-constituencies/data/parliament_con_2025/0.1.4/parl_constituencies_2025.csv`
+- `wget -O mysociety_2025_constituencies_boundaries.gpkg https://pages.mysociety.org/2025-constituencies/data/parliament_con_2025/0.1.4/parl_constituencies_2025.gpkg`
+- Manually download the UPRN lookup from here, unzip, and copy the data files (`NSUL_JAN_2024_*.csv`) into the `ONS_UPRN_lookup` folder (this could probably be automated with a wget & gunzip combo)
+
+If you don't have the `wget` command line utility (eg. Windows) you can manually download the files and rename them appropriately.
 
 ### Install
 
