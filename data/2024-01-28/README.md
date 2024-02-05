@@ -63,10 +63,37 @@ https://geoportal.statistics.gov.uk/datasets/9e5789e21a374f4c91dc4fac976003dc/ab
 ### Notes
 
 This dataset maps every Unique Property Reference Number (UPRN) - which represents an address in the UK - to a variety
-of geographies, including westminster parliamentary constituency. Unfortunately, this dataset does not (yet) include
+of geographies, including Westminster parliamentary constituency. Unfortunately, this dataset does not (yet) include
 the "new" UK Parliamentary Constituency boundaries - it uses the "current" boundaries which will not be used in the
 next general election in 2024 or 2025. It does include National Grid Reference co-ordinates for each address, which can
 be converted to latitude/longitude to work out which new constituency the address falls within.
+
+### License
+
+- Contains OS data © Crown copyright and database right 2024
+- Contains Royal Mail data © Royal Mail copyright and Database right 2024
+- Contains GeoPlace data © Local Government Information House Limited copyright and database right 2024
+- Source: Office for National Statistics licensed under the Open Government Licence v.3.0
+
+https://www.ons.gov.uk/methodology/geography/licences
+
+## National Statistics Postcode Directory (November 2023)
+
+### Files
+
+- `ONS_postcode_directory/ONSPD_NOV_2023_*.csv`
+
+### Source
+
+https://geoportal.statistics.gov.uk/datasets/3700342d3d184b0d92eae99a78d9c7a3/about
+
+### Notes
+
+This dataset maps postcodes - including terminated postcodes - to a variety of geographies, including Westminster
+parliamentary consituency. Similar to the UPRN dataset, this does not (yet) include the "new" UK Parliamentary
+Constituency boundaries - it uses the "current" boundaries which will not be used in the next general election in
+2024 or 2025. The ONSPD does include National Grid Reference co-ordaintes, and latitude/longitude, which we can use to
+work out which new constituency the postcode centroid falls within.
 
 ### License
 
