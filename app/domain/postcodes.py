@@ -44,9 +44,10 @@ class Postcode:
     # - 'SW1A 1AA' - { 1:'SW', 2:'1A', 3:'1', 4:'AA' }
     # - 'AL1 9ZZ' - { 1:'AL', 2:'1', 3:'9', 4:'ZZ' }
     # - 'E17 0GF' - { 1:'E', 2:'17', 3:'0', 4:'GF' }
-    POSTCODE_REGEXP = '^([A-Z][A-Z]{0,1})([0-9][A-Z0-9]{0,1}) {0,}([0-9])([A-Z]{2})$'
+    POSTCODE_REGEXP = r'^\s*([A-Z][A-Z]{0,1})([0-9][A-Z0-9]{0,1})\s*([0-9])([A-Z]{2})\s*$'
 
-    def __init__(self, postcode_string):
+    def __init__(self, postcode):
+      postcode_string = str(postcode)
       self.match = re.search(self.POSTCODE_REGEXP, postcode_string)
 
     def valid(self) -> bool:
