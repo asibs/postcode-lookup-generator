@@ -290,16 +290,16 @@ def create_combo_constituency_map(connection) -> None:
 def main() -> None:
     with psycopg.connect('user=local password=password host=localhost port=54321 dbname=gis') as conn:
         # UPRN Processing
-        # uprn_files = find_uprn_csv_files()
-        # print(f"{time.ctime()} - Found {len(uprn_files)} ONS UPRN CSV files")
+        uprn_files = find_uprn_csv_files()
+        print(f"{time.ctime()} - Found {len(uprn_files)} ONS UPRN CSV files")
 
-        # create_uprn_address_table(conn)
+        create_uprn_address_table(conn)
 
-        # for file_path in sorted(uprn_files):
-        #   print(f"{time.ctime()} - Loading data from {file_path}")
-        #   copy_addresses_from_uprn_file(file_path, conn)
+        for file_path in sorted(uprn_files):
+          print(f"{time.ctime()} - Loading data from {file_path}")
+          copy_addresses_from_uprn_file(file_path, conn)
 
-        # set_uprn_address_coords(conn)
+        set_uprn_address_coords(conn)
         create_uprn_address_constituency_map(conn)
         generate_uprn_postcode_to_constituency_mappings(conn)
 
