@@ -15,7 +15,7 @@ delete_db:
 populate_db_with_constituency_shapefiles:
 	ogr2ogr -f PostgreSQL \
 		"PG:user=local password=password dbname=gis host=localhost port=54321" \
-		data/2024-01-28/mysociety_2025_constituencies_boundaries.gpkg
+		data/2024-01-28/input/mysociety_2025_constituencies_boundaries.gpkg
 
 populate_db_with_addresses:
 	poetry run python -m app.scripts.load_postcodes

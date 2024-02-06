@@ -23,7 +23,7 @@ def get_file_line_count(filepath: str) -> int:
 ##### UPRN helper methods #####
 
 def find_uprn_csv_files() -> List[str]:
-    return glob.glob('data/2024-01-28/ONS_UPRN_lookup/*.csv')
+    return glob.glob('data/2024-01-28/input/ONS_UPRN_lookup/*.csv')
 
 def create_uprn_address_table(connection) -> None:
     with connection.cursor() as cursor:
@@ -97,8 +97,6 @@ def set_uprn_address_coords(connection) -> None:
         connection.commit()
 
 def create_uprn_address_constituency_map(connection) -> None:
-    batch_size = 1_000_000
-
     with connection.cursor() as cursor:
         cursor.execute("SELECT COUNT(1) FROM uprn_addresses")
         count_result = cursor.fetchone()
@@ -150,7 +148,7 @@ def generate_uprn_postcode_to_constituency_mappings(connection) -> None:
 ##### ONSPD helper methods #####
 
 def find_onspd_csv_files() -> List[str]:
-    return glob.glob('data/2024-01-28/ONS_postcode_directory/*.csv')
+    return glob.glob('data/2024-01-28/input/ONS_postcode_directory/*.csv')
 
 def create_onspd_postcodes_table(connection) -> None:
     with connection.cursor() as cursor:
@@ -241,7 +239,7 @@ def load_mysociety_constituencies(connection) -> None:
             """
         )
 
-        file_path = "data/2024-01-28/mysociety_2025_postcodes_with_constituencies.csv"
+        file_path = "data/2024-01-28/input/mysociety_2025_postcodes_with_constituencies.csv"
         with cursor.copy("COPY mysociety_postcode_to_constituency (postcode, constituency_code) FROM STDIN") as copy:
             # keep_default_na=False prevents pandas from translating empty strings to 'nan'
             csv_file = pandas.read_csv(file_path, dtype={'postcode':str, 'short_code':str}, keep_default_na=False)
@@ -249,7 +247,7 @@ def load_mysociety_constituencies(connection) -> None:
                 postcode = Postcode(line['postcode'])
                 if not postcode.valid():
                     invalid_postcodes.append(line['postcode'])
-                copy.write_row((postcode.unit_postcode(), line["short_code"]))
+                copy.write_row((postcode.unit_postcode(), line["short_code"] or None))
 
         connection.commit()
     
@@ -266,20 +264,73 @@ def create_combo_constituency_map(connection) -> None:
             CREATE TABLE combined_postcode_to_constituency AS (
                 SELECT
                   postcode,
-                  constituency_code,
+                  COALESCE(constituency_code, 'UNKNOWN') AS constituency_code,
                   'UPRN' AS source,
                   proportion_of_addresses::TEXT || ' percent of addresses in postcode' AS notes
                 FROM uprn_postcode_to_constituency
 
                 UNION
 
-                SELECT postcode, constituency_code, 'ONSPD' AS source, '' AS notes
+                SELECT
+                  postcode,
+                  COALESCE(constituency_code, 'UNKNOWN') AS constituency_code,
+                  'ONSPD' AS source,
+                  '' AS notes
                 FROM onspd_postcode_to_constituency
 
                 UNION
 
-                SELECT postcode, constituency_code, 'MySociety' AS source, '' AS notes
+                SELECT
+                  postcode,
+                  COALESCE(constituency_code, 'UNKNOWN') AS constituency_code,
+                  'MySociety' AS source,
+                  '' AS notes
                 FROM mysociety_postcode_to_constituency
+            )
+            """
+        )
+        connection.commit()
+
+def create_multi_column_constituency_map(connection) -> None:
+    with connection.cursor() as cursor:
+        print(f"{time.ctime()} - Creating multi-column postcode to constituency mapping combining all sources")
+        cursor.execute(
+            """
+            CREATE TABLE combined_postcode_to_constituency_multicol AS (
+                SELECT
+                    COALESCE(uprn_and_onspd.postcode, mysoc.postcode) AS postcode,
+                    uprn_pcon_1, uprn_pcon_2, uprn_pcon_3, uprn_pcon_4, uprn_pcon_5,
+                    onspd_pcon, mysociety_pcon
+                FROM (
+                    SELECT
+                        COALESCE(uprn.postcode, onspd.postcode) AS postcode,
+                        uprn_pcon_1, uprn_pcon_2, uprn_pcon_3, uprn_pcon_4, uprn_pcon_5,
+                        onspd_pcon
+                    FROM (
+                        SELECT                                                                  
+                            postcode,
+                            constituencies[1] AS uprn_pcon_1,
+                            constituencies[2] AS uprn_pcon_2,
+                            constituencies[3] AS uprn_pcon_3,
+                            constituencies[4] AS uprn_pcon_4,
+                            constituencies[5] AS uprn_pcon_5
+                        FROM (
+                            SELECT
+                                postcode,
+                                array_agg(COALESCE(constituency_code, 'UNKNOWN') ORDER BY proportion_of_addresses DESC) AS constituencies
+                            FROM uprn_postcode_to_constituency
+                            GROUP BY postcode
+                        )
+                    ) uprn
+                    FULL OUTER JOIN (
+                        SELECT postcode, COALESCE(constituency_code, 'UNKNOWN') AS onspd_pcon FROM onspd_postcode_to_constituency
+                    ) onspd
+                    ON uprn.postcode = onspd.postcode
+                ) uprn_and_onspd
+                FULL OUTER JOIN (
+                    SELECT postcode, COALESCE(constituency_code, 'UNKNOWN') AS mysociety_pcon FROM mysociety_postcode_to_constituency
+                ) mysoc
+                ON mysoc.postcode = uprn_and_onspd.postcode
             )
             """
         )
@@ -289,38 +340,39 @@ def create_combo_constituency_map(connection) -> None:
 
 def main() -> None:
     with psycopg.connect('user=local password=password host=localhost port=54321 dbname=gis') as conn:
-        # UPRN Processing
-        uprn_files = find_uprn_csv_files()
-        print(f"{time.ctime()} - Found {len(uprn_files)} ONS UPRN CSV files")
+        # # UPRN Processing
+        # uprn_files = find_uprn_csv_files()
+        # print(f"{time.ctime()} - Found {len(uprn_files)} ONS UPRN CSV files")
 
-        create_uprn_address_table(conn)
+        # create_uprn_address_table(conn)
 
-        for file_path in sorted(uprn_files):
-          print(f"{time.ctime()} - Loading data from {file_path}")
-          copy_addresses_from_uprn_file(file_path, conn)
+        # for file_path in sorted(uprn_files):
+        #   print(f"{time.ctime()} - Loading data from {file_path}")
+        #   copy_addresses_from_uprn_file(file_path, conn)
 
-        set_uprn_address_coords(conn)
-        create_uprn_address_constituency_map(conn)
-        generate_uprn_postcode_to_constituency_mappings(conn)
+        # set_uprn_address_coords(conn)
+        # create_uprn_address_constituency_map(conn)
+        # generate_uprn_postcode_to_constituency_mappings(conn)
 
-        # ONSPD processing
-        onspd_files = find_onspd_csv_files()
-        print(f"{time.ctime()} - Found {len(onspd_files)} ONSPD CSV files")
+        # # ONSPD processing
+        # onspd_files = find_onspd_csv_files()
+        # print(f"{time.ctime()} - Found {len(onspd_files)} ONSPD CSV files")
 
-        create_onspd_postcodes_table(conn)
+        # create_onspd_postcodes_table(conn)
 
-        for file_path in sorted(onspd_files):
-          print(f"{time.ctime()} - Loading data from {file_path}")
-          copy_postcodes_from_onspd_file(file_path, conn)
+        # for file_path in sorted(onspd_files):
+        #   print(f"{time.ctime()} - Loading data from {file_path}")
+        #   copy_postcodes_from_onspd_file(file_path, conn)
 
-        set_onspd_postcode_coords(conn)
-        create_onspd_postcode_constituency_map(conn)
+        # set_onspd_postcode_coords(conn)
+        # create_onspd_postcode_constituency_map(conn)
 
-        # MySociety processing
-        load_mysociety_constituencies(conn)
+        # # MySociety processing
+        # load_mysociety_constituencies(conn)
 
         # Combine the data
         create_combo_constituency_map(conn)
+        create_multi_column_constituency_map(conn)
 
 
 if __name__ == '__main__':

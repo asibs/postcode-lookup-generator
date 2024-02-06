@@ -19,7 +19,7 @@ missing_constituency = 0
 invalid_constituency = 0
 
 output_data = []
-with open('data/2024-01-28/mysociety_2025_postcodes_with_constituencies.csv', 'r') as postcode_csv:
+with open('data/2024-01-28/input/mysociety_2025_postcodes_with_constituencies.csv', 'r') as postcode_csv:
     reader = csv.DictReader(postcode_csv)
     for line in reader:
         postcode = Postcode(line['postcode'])

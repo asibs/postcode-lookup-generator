@@ -101,7 +101,6 @@ resulting CSV / SQLite database, you can run the postcode lookup generator code 
 ### Pre-requisites
 
 - [Git](https://git-scm.com/book/en/v2/Getting-Started-Installing-Git)
-- [Git LFS](https://github.com/git-lfs/git-lfs?utm_source=gitlfs_site&utm_medium=installation_link&utm_campaign=gitlfs#installing)
 - Python 3.12 (I recommend using [pyenv](https://github.com/pyenv/pyenv?tab=readme-ov-file#getting-pyenv) to install
   & manage python versions)
 - [Poetry](https://python-poetry.org/docs/#installation)
@@ -120,9 +119,10 @@ for this version. If you want an older version of the source data, use the instr
 The current version of the source data is `2024-01-28`, and the instructions to get this data are:
 
 - Ensure you are in the `data/2024-01-28/` directory
-- `wget -O mysociety_2025_constituencies.csv https://pages.mysociety.org/2025-constituencies/data/parliament_con_2025/0.1.4/parl_constituencies_2025.csv`
-- `wget -O mysociety_2025_constituencies_boundaries.gpkg https://pages.mysociety.org/2025-constituencies/data/parliament_con_2025/0.1.4/parl_constituencies_2025.gpkg`
-- Manually download the UPRN lookup from here, unzip, and copy the data files (`NSUL_JAN_2024_*.csv`) into the `ONS_UPRN_lookup` folder (this could probably be automated with a wget & gunzip combo)
+- `wget -O input/mysociety_2025_constituencies.csv https://pages.mysociety.org/2025-constituencies/data/parliament_con_2025/0.1.4/parl_constituencies_2025.csv`
+- `wget -O input/mysociety_2025_constituencies_boundaries.gpkg https://pages.mysociety.org/2025-constituencies/data/parliament_con_2025/0.1.4/parl_constituencies_2025.gpkg`
+- Manually download the [UPRN data from here](https://geoportal.statistics.gov.uk/datasets/9e5789e21a374f4c91dc4fac976003dc/about), unzip, and copy the data files (`NSUL_JAN_2024_*.csv`) into the `input/ONS_UPRN_lookup` folder (this could probably be automated with a wget & gunzip combo)
+- Manually download the [ONSPD data from here](https://geoportal.statistics.gov.uk/datasets/3700342d3d184b0d92eae99a78d9c7a3/about), unzip, and copy the data file (`ONSPD_NOV_2023_UK.csv`) into the `input/ONS_postcode_directory` folder (this could probably be automated with a wget & gunzip combo)
 
 If you don't have the `wget` command line utility (eg. Windows) you can manually download the files and rename them appropriately.
 
@@ -146,29 +146,57 @@ We can do various data validation on the installed data:
 ```sql
 -- Look for postcodes which are in the UPRN Lookup dataset, but which aren't in the MySociety dataset
 SELECT DISTINCT postcode
-FROM postcode_to_constituency map
+FROM uprn_postcode_to_constituency uprn
 WHERE NOT EXISTS (
-  SELECT 1 FROM mysociety_postcode_constituency mysoc WHERE mysoc.postcode = map.postcode
+  SELECT 1 FROM mysociety_postcode_to_constituency mysoc WHERE mysoc.postcode = uprn.postcode
 );
 
 -- Look for postcodes which are in the MySociety dataset, but which aren't in the UPRN Lookup dataset
-SELECT * FROM mysociety_postcode_constituency mysoc
+SELECT DISTINCT postcode
+FROM mysociety_postcode_to_constituency mysoc
 WHERE NOT EXISTS (
-  SELECT 1 FROM postcode_to_constituency map WHERE map.postcode = mysoc.postcode
+  SELECT 1 FROM uprn_postcode_to_constituency uprn WHERE uprn.postcode = mysoc.postcode
+);
+
+-- Look for postcodes which are in the UPRN Lookup dataset, but which aren't in the ONSPD dataset
+SELECT DISTINCT postcode
+FROM uprn_postcode_to_constituency uprn
+WHERE NOT EXISTS (
+  SELECT 1 FROM onspd_postcode_to_constituency onspd WHERE onspd.postcode = uprn.postcode
+);
+
+-- Look for postcodes which are in the ONSPD dataset, but which aren't in the UPRN Lookup dataset
+SELECT DISTINCT postcode
+FROM onspd_postcode_to_constituency onspd
+WHERE NOT EXISTS (
+  SELECT 1 FROM uprn_postcode_to_constituency uprn WHERE uprn.postcode = onspd.postcode
 );
 
 -- Look for postcodes which are in the MySociety dataset AND in the UPRN Lookup dataset, where the constituency
--- identified by MySociety for that postcode has not been identified by our methodology
-SELECT * FROM mysociety_postcode_constituency mysoc
-WHERE EXISTS (
-  SELECT 1 FROM postcode_to_constituency map
-  WHERE map.postcode = mysoc.postcode
-)
+-- identified by MySociety for that postcode has not been identified by our UPRN methodology
+SELECT *
+FROM mysociety_postcode_to_constituency mysoc
+JOIN uprn_postcode_to_constituency uprn
+ON mysoc.postcode = uprn.postcode
 AND NOT EXISTS (
-  SELECT 1 FROM postcode_to_constituency map
-  WHERE map.postcode = mysoc.postcode
-  AND map.constituency_code = mysoc.constituency_code
-);
+  SELECT 1 FROM uprn_postcode_to_constituency uprn
+  WHERE uprn.postcode = mysoc.postcode
+  AND uprn.constituency_code = mysoc.constituency_code
+)
+ORDER BY 1;
+
+-- Look for postcodes which are in the ONSPD dataset AND in the UPRN Lookup dataset, where the constituency
+-- identified by the ONSPD method has not been identified by our UPRN methodology
+SELECT *
+FROM onspd_postcode_to_constituency onspd
+JOIN uprn_postcode_to_constituency uprn
+ON onspd.postcode = uprn.postcode
+AND NOT EXISTS (
+  SELECT 1 FROM uprn_postcode_to_constituency uprn
+  WHERE uprn.postcode = onspd.postcode
+  AND uprn.constituency_code = onspd.constituency_code
+)
+ORDER BY 1;
 ```
 
 ### Generate output files
@@ -180,23 +208,13 @@ Once the install is complete, you can generate output files, such as a postcode 
 This ad-hoc method is a good start-point for a CSV:
 
 ```sql
-SELECT
-  postcode,
-  constituencies[1] AS constituency_1,
-  constituencies[2] AS constituency_2,
-  constituencies[3] AS constituency_3,
-  constituencies[4] AS constituency_4,
-  constituencies[5] AS constituency_5
-FROM (
-  SELECT postcode, array_agg(constituency_code) AS constituencies
-  FROM postcode_to_constituency GROUP BY 1
-);
+SELECT * FROM combined_postcode_to_constituency_multicol ORDER BY 1;
 ```
 
 Or to push it to a file:
 
 ```
-psql -c 'COPY ( SELECT postcode, constituencies[1] AS constituency_1, constituencies[2] AS constituency_2, constituencies[3] AS constituency_3, constituencies[4] AS constituency_4, constituencies[5] AS constituency_5 FROM ( SELECT postcode, array_agg(constituency_code) AS constituencies FROM postcode_to_constituency GROUP BY 1 ) ) TO STDOUT WITH(FORMAT CSV, HEADER);' postgres://local:password@localhost:54321/gis > ./output/result.csv
+psql -c 'COPY ( SELECT * FROM combined_postcode_to_constituency_multicol ORDER BY 1 ) TO STDOUT WITH(FORMAT CSV, HEADER);' postgres://local:password@localhost:54321/gis > ./data/2024-01-28/output/postcode_lookup.csv
 ```
 
 ### Ad-hoc analysis

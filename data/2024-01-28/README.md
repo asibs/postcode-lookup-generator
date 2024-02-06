@@ -1,11 +1,12 @@
-# Data Used - 2024-01-28
+# 2024-01-28 version
 
 To get all the data:
 
 - Ensure you are in the `data/2024-01-28/` directory
-- `wget -O mysociety_2025_constituencies.csv https://pages.mysociety.org/2025-constituencies/data/parliament_con_2025/0.1.4/parl_constituencies_2025.csv`
-- `wget -O mysociety_2025_constituencies_boundaries.gpkg https://pages.mysociety.org/2025-constituencies/data/parliament_con_2025/0.1.4/parl_constituencies_2025.gpkg`
-- Manually download the UPRN lookup from here, unzip, and copy the data files (`NSUL_JAN_2024_*.csv`) into the `ONS_UPRN_lookup` folder (this could probably be automated with a wget & gunzip combo)
+- `wget -O input/mysociety_2025_constituencies.csv https://pages.mysociety.org/2025-constituencies/data/parliament_con_2025/0.1.4/parl_constituencies_2025.csv`
+- `wget -O input/mysociety_2025_constituencies_boundaries.gpkg https://pages.mysociety.org/2025-constituencies/data/parliament_con_2025/0.1.4/parl_constituencies_2025.gpkg`
+- Manually download the [UPRN data from here](https://geoportal.statistics.gov.uk/datasets/9e5789e21a374f4c91dc4fac976003dc/about), unzip, and copy the data files (`NSUL_JAN_2024_*.csv`) into the `input/ONS_UPRN_lookup` folder (this could probably be automated with a wget & gunzip combo)
+- Manually download the [ONSPD data from here](https://geoportal.statistics.gov.uk/datasets/3700342d3d184b0d92eae99a78d9c7a3/about), unzip, and copy the data file (`ONSPD_NOV_2023_UK.csv`) into the `input/ONS_postcode_directory` folder (this could probably be automated with a wget & gunzip combo)
 
 If you don't have the `wget` command line utility (eg. Windows) you can manually download the files and rename them appropriately.
 
