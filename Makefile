@@ -21,9 +21,9 @@ populate_db_with_postcode_data:
 	poetry run python -m app.scripts.load_postcodes
 
 generate_csv_postcode_lookup:
-  poetry run python -m app.scripts.generate_csv
+	poetry run python -m app.scripts.generate_csv
 
 generate_sqlite_postcode_lookup:
-  poetry run python -m app.scripts.generate_sqlite
+	poetry run python -m app.scripts.generate_sqlite
 
 clean_install: install_dependencies delete_db start_db populate_db_with_constituency_shapefiles populate_db_with_postcode_data
