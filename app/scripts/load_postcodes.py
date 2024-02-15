@@ -266,6 +266,7 @@ def create_combo_constituency_map(connection) -> None:
                   postcode,
                   COALESCE(constituency_code, 'UNKNOWN') AS constituency_code,
                   'UPRN' AS source,
+                  (proportion_of_addresses / 100) AS confidence,
                   proportion_of_addresses::TEXT || ' percent of addresses in postcode' AS notes
                 FROM uprn_postcode_to_constituency
 
@@ -275,6 +276,7 @@ def create_combo_constituency_map(connection) -> None:
                   postcode,
                   COALESCE(constituency_code, 'UNKNOWN') AS constituency_code,
                   'ONSPD' AS source,
+                  (CASE WHEN constituency_code IS NULL THEN NULL ELSE 1.0 END) AS confidence,
                   '' AS notes
                 FROM onspd_postcode_to_constituency
 
@@ -284,6 +286,7 @@ def create_combo_constituency_map(connection) -> None:
                   postcode,
                   COALESCE(constituency_code, 'UNKNOWN') AS constituency_code,
                   'MySociety' AS source,
+                  (CASE WHEN constituency_code IS NULL THEN NULL ELSE 1.0 END) AS confidence,
                   '' AS notes
                 FROM mysociety_postcode_to_constituency
             )
@@ -299,25 +302,40 @@ def create_multi_column_constituency_map(connection) -> None:
             CREATE TABLE combined_postcode_to_constituency_multicol AS (
                 SELECT
                     COALESCE(uprn_and_onspd.postcode, mysoc.postcode) AS postcode,
-                    uprn_pcon_1, uprn_pcon_2, uprn_pcon_3, uprn_pcon_4, uprn_pcon_5,
-                    onspd_pcon, mysociety_pcon
+                    uprn_pcon_1, uprn_pcon_1_confidence,
+                    uprn_pcon_2, uprn_pcon_2_confidence,
+                    uprn_pcon_3, uprn_pcon_3_confidence,
+                    uprn_pcon_4, uprn_pcon_4_confidence,
+                    uprn_pcon_5, uprn_pcon_5_confidence,
+                    onspd_pcon, (CASE WHEN onspd_pcon IS NULL THEN NULL ELSE 1.0 END) AS onspd_pcon_confidence,
+                    mysociety_pcon, (CASE WHEN mysociety_pcon IS NULL THEN NULL ELSE 1.0 END) AS mysociety_pcon_confidence
                 FROM (
                     SELECT
                         COALESCE(uprn.postcode, onspd.postcode) AS postcode,
-                        uprn_pcon_1, uprn_pcon_2, uprn_pcon_3, uprn_pcon_4, uprn_pcon_5,
+                        uprn_pcon_1, uprn_pcon_1_confidence,
+                        uprn_pcon_2, uprn_pcon_2_confidence,
+                        uprn_pcon_3, uprn_pcon_3_confidence,
+                        uprn_pcon_4, uprn_pcon_4_confidence,
+                        uprn_pcon_5, uprn_pcon_5_confidence,
                         onspd_pcon
                     FROM (
                         SELECT                                                                  
                             postcode,
                             constituencies[1] AS uprn_pcon_1,
+                            (proportions[1] / 100) AS uprn_pcon_1_confidence,
                             constituencies[2] AS uprn_pcon_2,
+                            (proportions[2] / 100) AS uprn_pcon_2_confidence,
                             constituencies[3] AS uprn_pcon_3,
+                            (proportions[3] / 100) AS uprn_pcon_3_confidence,
                             constituencies[4] AS uprn_pcon_4,
-                            constituencies[5] AS uprn_pcon_5
+                            (proportions[4] / 100) AS uprn_pcon_4_confidence,
+                            constituencies[5] AS uprn_pcon_5,
+                            (proportions[5] / 100) AS uprn_pcon_5_confidence
                         FROM (
                             SELECT
                                 postcode,
-                                array_agg(COALESCE(constituency_code, 'UNKNOWN') ORDER BY proportion_of_addresses DESC) AS constituencies
+                                array_agg(COALESCE(constituency_code, 'UNKNOWN') ORDER BY proportion_of_addresses DESC) AS constituencies,
+                                array_agg(COALESCE(proportion_of_addresses, 0.0) ORDER BY proportion_of_addresses DESC) AS proportions
                             FROM uprn_postcode_to_constituency
                             GROUP BY postcode
                         )

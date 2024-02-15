@@ -203,19 +203,28 @@ ORDER BY 1;
 
 Once the install is complete, you can generate output files, such as a postcode -> constituency CSV or SQLite database.
 
-**TODO**: Add scripts to generate a SQLite & CSV file of postcode mappings & instructions on use
+#### CSV file
 
-This ad-hoc method is a good start-point for a CSV:
+Generate a CSV file with a single line for each postcode, and a column for each constituency we believe part of the
+postcode falls within. For most postcodes, this will only be a single constituency. Where there are multiple
+constituencies, they will be ordered by how confident we are that the given postcode (or part of it) falls within the
+constituency, and how many addresses within the postcode are covered by the constituency.
 
-```sql
-SELECT * FROM combined_postcode_to_constituency_multicol ORDER BY 1;
-```
+`make generate_csv_postcode_lookup`
 
-Or to push it to a file:
+You can add confidence level columns (ranging from 0.0 to 1.0) to the CSV by editing the `scripts/generate_csv.py` file
+and changing the `write_confidences` parameter to `True`. These confidences are only indicitave, and primarily intended
+as to order the constituencies.
 
-```
-psql -c 'COPY ( SELECT * FROM combined_postcode_to_constituency_multicol ORDER BY 1 ) TO STDOUT WITH(FORMAT CSV, HEADER);' postgres://local:password@localhost:54321/gis > ./data/2024-01-28/output/postcode_lookup.csv
-```
+
+#### SQLite database file
+
+Generate a SQLite database file with a row for each postcode to constituency mapping, including the confidence level.
+For most postcodes, there will only be a single row (a single constituency). Where there are multiple constituencies,
+the confidence column should be used to order the rows (descending) in order to return the constituency we're most
+confident in first.
+
+`make generate_sqlite_postcode_lookup`
 
 ### Ad-hoc analysis
 
@@ -230,4 +239,4 @@ From there you can explore the tables and do any ad-hoc analysis.
 ### Shutting down
 
 - `make stop_db` - Stops the PostGIS docker database, but leaves all data intact (you can start it again with `make start_db`)
-- `make delete_db` - Stops the PostGIS docker database, and deletes the volume with all the data
+- `make delete_db` - Stops the PostGIS docker database, and **deletes the volume with all the data**.
