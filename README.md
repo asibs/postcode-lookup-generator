@@ -10,7 +10,40 @@ addresses in a single postcode are in the same constituency), then read on...
 
 ## Shut up and give me the data!
 
-TODO: Link to the latest CSV
+### CSV file
+
+[/data/2024-01-28/output/postcode-lookup.csv](https://github.com/asibs/postcode-lookup-generator/blob/main/data/2024-01-28/output/postcode-lookup.csv)
+
+Contains a row for each postcode (postcodes are stripped of any whitespace), and which constituencies we think the
+postcode falls within. The constituency columns, `pcon_1`, etc contain the MySociety constituency short code. You can
+use this code to map to other constituency codes (eg. GSS code, etc) using the
+[MySociety dataset here](https://pages.mysociety.org/2025-constituencies/data/parliament_con_2025/0.1.4/parl_constituencies_2025.csv).
+
+If a postcode is in more than one constituency, the `pcon_1` column will contain the constituency code we are _most
+confident_ of / the constituency we believe _most_ addresses in the postcode are in.
+
+### SQLite database file
+
+[/data/2024-01-28/output/postcode-lookup.db](https://github.com/asibs/postcode-lookup-generator/blob/main/data/2024-01-28/output/postcode-lookup.db)
+
+Use the following example to get all constituencies which contain part of the given postcode, ordered by confidence
+(highest confidence first):
+
+```sql
+SELECT
+  pcon.slug,
+  pcon.short_code,
+  pcon.name,
+  postcode_lookup.confidence
+FROM postcode_lookup
+JOIN pcon ON postcode_lookup.pcon_id = pcon.id
+WHERE postcode_lookup.postcode = 'AB101QJ'
+ORDER BY postcode_lookup.confidence DESC;
+```
+
+If you just want the most likely constituency for a given postcode, simply add a `LIMIT 1`.
+
+Note, you must normalise the postcode input by uppercasing and removing any whitespace.
 
 ## More background
 
