@@ -232,6 +232,11 @@ AND NOT EXISTS (
 ORDER BY 1;
 ```
 
+If you find odd looking data, the following websites may be useful:
+
+- [uprn.uk](https://uprn.uk/) - find a specific UPRN on a map, or find all UPRNs within a specific postcode
+- [Electoral Calculus map of new constituecy boundaries](https://www.electoralcalculus.co.uk/openseatmap.html?seats=2023)
+
 ### Generate output files
 
 Once the install is complete, you can generate output files, such as a postcode -> constituency CSV or SQLite database.
