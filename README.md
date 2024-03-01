@@ -3,7 +3,9 @@
 If you just need a _simple_ lookup from postcode to _most likely_ constituency, you can download a CSV from the folks
 at mySociety:
 
-https://pages.mysociety.org/2025-constituencies/datasets/uk_parliament_2025_postcode_lookup/latest
+https://www.mysociety.org/2023/09/12/navigating-the-new-constituencies/
+
+Or use https://mapit.mysociety.org/ which includes Northern Ireland postcodes.
 
 If you care about the fact that _some_ postcodes may straddle multiple constituencies (ie. _sometimes_ not all
 addresses in a single postcode are in the same constituency), then read on...
