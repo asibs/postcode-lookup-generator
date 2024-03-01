@@ -74,8 +74,8 @@ class PostcodeLookupWriter:
             onspd_match = next((item for item in parsed_row['onspd_pcons'] if item['pcon'] == pcon), None)
             mysoc_match = next((item for item in parsed_row['mysociety_pcons'] if item['pcon'] == pcon), None)
 
-            # We give 50% of the confidence to UPRN, then we give 25% each to ONSPD & MySoc, so a postcode -> constituency
-            # will only have 100% if ALL properties in the UPRN give the same constituency, and if both ONSPD & MySociety
+            # We give 50% of the confidence to UPRN, then we give 25% each to ONSPD & mySoc, so a postcode -> constituency
+            # will only have 100% if ALL properties in the UPRN give the same constituency, and if both ONSPD & mySociety
             # agree with this. Note, the total confidences for a postcode _may not_ add up to 100% if a single property in
             # ONSPD overlaps with multiple constituency boundaries (in practice, there are only a couple of records where
             # this is a problem). 
