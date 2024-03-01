@@ -111,8 +111,10 @@ seeing which constituency it overlaps with.
 If every UPRN in a single postcode is in the same constituency, we can assume that the whole postcode is within that
 constituency.
 
-If different UPRNs within a single postcode have different constituencies, we know we have a postcode where the exact
-address is needed to determine the constituency.
+If different UPRNs within a single postcode have different constituencies, we know we might have a postcode where the exact
+address is needed to determine the constituency. As the open UPRN data includes non-address UPRNs such as Street Records,
+with no classification, it is possible for every address in the postcode to be in one constituency, but for all the UPRNs
+to cover more than one constituency.
 
 At the time of writing, there's no open data source which maps UPRNs to a human-readable address. This means if a
 user's postcode straddles multiple constituencies, we can now detect it and tell the user (possibly asking them to
