@@ -1,9 +1,11 @@
 # Postcode Lookup Generator
 
 If you just need a _simple_ lookup from postcode to _most likely_ constituency, you can download a CSV from the folks
-at MySociety:
+at mySociety:
 
-https://pages.mysociety.org/2025-constituencies/datasets/uk_parliament_2025_postcode_lookup/latest
+https://www.mysociety.org/2023/09/12/navigating-the-new-constituencies/
+
+Or use https://mapit.mysociety.org/ which includes Northern Ireland postcodes.
 
 If you care about the fact that _some_ postcodes may straddle multiple constituencies (ie. _sometimes_ not all
 addresses in a single postcode are in the same constituency), then read on...
@@ -15,9 +17,9 @@ addresses in a single postcode are in the same constituency), then read on...
 [/data/2024-01-28/output/postcode-lookup.csv](https://github.com/asibs/postcode-lookup-generator/blob/main/data/2024-01-28/output/postcode-lookup.csv)
 
 Contains a row for each postcode (postcodes are stripped of any whitespace), and which constituencies we think the
-postcode falls within. The constituency columns, `pcon_1`, etc contain the MySociety constituency short code. You can
+postcode falls within. The constituency columns, `pcon_1`, etc contain the mySociety constituency short code. You can
 use this code to map to other constituency codes (eg. GSS code, etc) using the
-[MySociety dataset here](https://pages.mysociety.org/2025-constituencies/data/parliament_con_2025/0.1.4/parl_constituencies_2025.csv).
+[mySociety dataset here](https://pages.mysociety.org/2025-constituencies/data/parliament_con_2025/0.1.4/parl_constituencies_2025.csv).
 
 If a postcode is in more than one constituency, the `pcon_1` column will contain the constituency code we are _most
 confident_ of / the constituency we believe _most_ addresses in the postcode are in.
@@ -109,8 +111,10 @@ seeing which constituency it overlaps with.
 If every UPRN in a single postcode is in the same constituency, we can assume that the whole postcode is within that
 constituency.
 
-If different UPRNs within a single postcode have different constituencies, we know we have a postcode where the exact
-address is needed to determine the constituency.
+If different UPRNs within a single postcode have different constituencies, we know we might have a postcode where the exact
+address is needed to determine the constituency. As the open UPRN data includes non-address UPRNs such as Street Records,
+with no classification, it is possible for every address in the postcode to be in one constituency, but for all the UPRNs
+to cover more than one constituency.
 
 At the time of writing, there's no open data source which maps UPRNs to a human-readable address. This means if a
 user's postcode straddles multiple constituencies, we can now detect it and tell the user (possibly asking them to
@@ -177,14 +181,14 @@ then performs various geo-spatial queries on _every single address_.
 We can do various data validation on the installed data:
 
 ```sql
--- Look for postcodes which are in the UPRN Lookup dataset, but which aren't in the MySociety dataset
+-- Look for postcodes which are in the UPRN Lookup dataset, but which aren't in the mySociety dataset
 SELECT DISTINCT postcode
 FROM uprn_postcode_to_constituency uprn
 WHERE NOT EXISTS (
   SELECT 1 FROM mysociety_postcode_to_constituency mysoc WHERE mysoc.postcode = uprn.postcode
 );
 
--- Look for postcodes which are in the MySociety dataset, but which aren't in the UPRN Lookup dataset
+-- Look for postcodes which are in the mySociety dataset, but which aren't in the UPRN Lookup dataset
 SELECT DISTINCT postcode
 FROM mysociety_postcode_to_constituency mysoc
 WHERE NOT EXISTS (
@@ -205,8 +209,8 @@ WHERE NOT EXISTS (
   SELECT 1 FROM uprn_postcode_to_constituency uprn WHERE uprn.postcode = onspd.postcode
 );
 
--- Look for postcodes which are in the MySociety dataset AND in the UPRN Lookup dataset, where the constituency
--- identified by MySociety for that postcode has not been identified by our UPRN methodology
+-- Look for postcodes which are in the mySociety dataset AND in the UPRN Lookup dataset, where the constituency
+-- identified by mySociety for that postcode has not been identified by our UPRN methodology
 SELECT *
 FROM mysociety_postcode_to_constituency mysoc
 JOIN uprn_postcode_to_constituency uprn

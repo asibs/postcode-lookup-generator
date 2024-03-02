@@ -10,7 +10,7 @@ To get all the data:
 
 If you don't have the `wget` command line utility (eg. Windows) you can manually download the files and rename them appropriately.
 
-## MySociety Constituency Data, including boundaries (V0.1.4)
+## mySociety Constituency Data, including boundaries (V0.1.4)
 
 ### Files
 
@@ -31,7 +31,7 @@ Creative Commons Attribution 4.0 International License
 
 https://pages.mysociety.org/2025-constituencies/datasets/parliament_con_2025/0_1_4
 
-## MySociety Postcode Data (V0.1.2)
+## mySociety Postcode Data (V0.1.2)
 
 ### Files
 

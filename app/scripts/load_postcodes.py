@@ -223,13 +223,13 @@ def create_onspd_postcode_constituency_map(connection) -> None:
         )
         connection.commit()
 
-##### MySociety helper methods #####
+##### mySociety helper methods #####
 
 def load_mysociety_constituencies(connection) -> None:
     invalid_postcodes = []
 
     with connection.cursor() as cursor:
-        print(f"{time.ctime()} - Loading MySociety postcode to constituencies mappings")
+        print(f"{time.ctime()} - Loading mySociety postcode to constituencies mappings")
         cursor.execute(
             """
             CREATE TABLE mysociety_postcode_to_constituency (
@@ -285,7 +285,7 @@ def create_combo_constituency_map(connection) -> None:
                 SELECT
                   postcode,
                   COALESCE(constituency_code, 'UNKNOWN') AS constituency_code,
-                  'MySociety' AS source,
+                  'mySociety' AS source,
                   (CASE WHEN constituency_code IS NULL THEN NULL ELSE 1.0 END) AS confidence,
                   '' AS notes
                 FROM mysociety_postcode_to_constituency
@@ -385,7 +385,7 @@ def main() -> None:
         # set_onspd_postcode_coords(conn)
         # create_onspd_postcode_constituency_map(conn)
 
-        # # MySociety processing
+        # # mySociety processing
         # load_mysociety_constituencies(conn)
 
         # Combine the data
@@ -397,7 +397,7 @@ if __name__ == '__main__':
     main()
 
 
-# Once everything is loaded, you can connect to the postgis DB and check for any mismatch with the MySociety data with:
+# Once everything is loaded, you can connect to the postgis DB and check for any mismatch with the mySociety data with:
 """
 SELECT
     map.postcode,
@@ -412,6 +412,6 @@ AND map.postcode = mysoc.postcode
 AND map.constituency_code <> mysoc.constituency_code
 ORDER BY 1;
 """
-# TODO: Generate the final postcode -> constituncies map by combining _all_ constituencies from our map AND any from MySoc.
+# TODO: Generate the final postcode -> constituncies map by combining _all_ constituencies from our map AND any from mySoc.
 # This should give us every postcode, and the list of possible constituencies - including any postcodes which are in multiple constituencies.
 # For those constituencies, we can fallback to the DemoClub postcode lookup (once the election is announced - their API only returns data for boundaries with elections...)
